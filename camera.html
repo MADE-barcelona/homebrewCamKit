@@ -43,14 +43,12 @@
 </div>
 
 <script>
-/*$("#directionArrow").rotate(#POS#)*/
-
 $("#moveValue").val(#POS#);
-$("#moveButton").click(function(){ 
-    document.location.href = "/" + $("#moveValue").val(); 
+$("#moveButton").click(function(){
+    document.location.href = "/" + $("#moveValue").val();
     });
 
-$("#levelBar").click(function(e){ 
+$("#levelBar").click(function(e){
     var scale = 180 / $(this).width(), x = e.pageX - $(this).position().left
     document.location.href = "/" + parseInt(180 - (x * scale) , 10)
     });
