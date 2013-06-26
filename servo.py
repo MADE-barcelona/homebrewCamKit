@@ -44,7 +44,6 @@ def set(prop, value):
     try:
         f = open("/sys/class/rpi-pwm/pwm0/" + prop, 'w')
         f.write(value)
-        print(prop + " value: " + value)
         f.close()
     except:
         print("Error writing to: " + prop + " value: " + value)
@@ -57,13 +56,25 @@ def setServo(angle):
 ##################################################
 class CameraController(resource.Resource):
 
+    print "Camera Controller started."
+
     isLeaf = 1
-    position = 0
+
+    TICK = 6 # minimum degree of movement for servo.
+    HOME = 90 # HOME position of the servo.
+
+    position = HOME
     percentage = 50
 
     body = "<H1>#POS#</H1>" # Worst case scenario!
 
     print "initial position: ", position, type(position)
+
+    set("delayed", "0")
+    set("mode", "servo")
+    set("servo_max", "180")
+    set("active", "1")
+    setServo(position)
 
     def render_GET(self, request):
 
@@ -83,47 +94,51 @@ class CameraController(resource.Resource):
         ####################################################
         #   Simple HTTP get API
         #
+        #   http://HOSTNAME:8080
+        #       reset to HOME position
         #   http://HOSTNAME:8080/nnn
         #       where nnn is a value between 0 and 180
         #   http://HOSTNAME:8080/LEFT
         #   http://HOSTNAME:8080/RIGHT
         #       to tick the motor left or right
+        #
         ####################################################
         newPosition = int(self.position)
         rawRequestedPosition = request.path
 
         if rawRequestedPosition != "/favicon.ico":
 
-            if rawRequestedPosition == "/LEFT"
-                newPosition = self.position + 3
+            print request.getClientIP(), request.uri ,
+
+            if request.uri  == "/": # send to HOME position
+                newPosition = self.HOME
+            elif rawRequestedPosition == "/LEFT":
+                newPosition = self.position + self.TICK
             elif rawRequestedPosition == "/RIGHT":
-                newPosition = self.position - 3
+                newPosition = self.position - self.TICK
             else:
-                newPosition = int(filter(type(rawRequestedPosition).isdigit, rawRequestedPosition))
+                try:
+                    newPosition = int(filter(type(rawRequestedPosition).isdigit, rawRequestedPosition))
+                except ValueError:
+                    newPosition = self.position
+                    print "***" ,
 
-        print request.path , type(self.position), type(newPosition)
+            print type(self.position), self.position, type(newPosition) , newPosition
 
-        if newPosition < 0:
-            newPosition = 0
+            if newPosition < 0:
+                newPosition = 0
 
-        if newPosition>180:
-            newPosition=180
+            if newPosition > 180:
+                newPosition = 180
 
-        self.position = int(newPosition)
+            self.position = int(newPosition)
 
-        self.percentage = 100 - (100 * float(self.position)/float(180))
+            self.percentage = 100 - (100 * float(self.position)/float(180))
 
-        setServo(self.position)
+            setServo(self.position)
 
         request.setHeader("content-type", "text/html")
         return self.body.replace("#POS#", str(self.position)).replace("#PCT#", str(self.percentage)).replace("#RPCT#",str(100- self.percentage))
 
-    set("delayed", "0")
-    set("mode", "servo")
-    set("servo_max", "180")
-    set("active", "1")
-    setServo(position)
-
 reactor.listenTCP(8080, server.Site(CameraController()))
-print "Camera Controller started."
 reactor.run()
