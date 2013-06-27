@@ -12,11 +12,17 @@
     }
     [class^="icon-"], [class*=" icon-"] {
             width: 12px;
-        }
+    }
+    .red-led.active {
+        color: red;
+    }
+    .green-led.active {
+        color: green;
+    }
     </style>
 </HEAD>
 <BODY style="width:380px;">
-<div class="wrapper">
+
     <div class="navbar">
       <div class="navbar-inner">
         <ul class="nav">
@@ -39,16 +45,23 @@
                     <div class="bar bar-error" style="width: #PCT#%;"></div>
                     <div class="bar bar-success" style="width: #RPCT#%;"></div>
                 </div>
-                    <div class="input-append">
-                        <input class="span4" id="moveValue" type="text">
-                        <button id="moveButton" class="btn" type="button">Move</button>
-                    </div>
+            </div>
+            <div class="row-fluid">
+                <div class="input-append span6">
+                    <input class="span3" id="moveValue" type="text">
+                    <button id="moveButton" class="btn" type="button">Move</button>
+                </div>
+                <div id="btn-power" class="btn-group span6" xdata-toggle="buttons-radio">
+                    <button type="button" class="btn btn-primary green-led active">On</button>
+                    <button type="button" class="btn btn-primary red-led">Off</button>
+                </div>
             </div>
             <div class="span3">
             </div>
         </div>
     </div>
-</div>
+
+
 <script>
 $(function(){
 
@@ -90,11 +103,13 @@ $(function(){
         return false;
     });
 
+    $("#btn-power").click(function() {
+        $('#btn-power button').toggleClass('active');
+        console.log("clickety" , $("#btn-power button .active").text())
+});
     setBar(#POS#);
 
 });
-
-
 </script>
 
 </BODY>

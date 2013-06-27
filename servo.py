@@ -84,12 +84,16 @@ class CameraController(resource.Resource):
         #   in an apparent homage to 1998! but allows very
         #   rapid change/deploy for the web UI.
         ###################################################
-        try:
-            with open("camera.html") as myfile:
-                self.body = "".join(line for line in myfile)
-            myfile.closed
-        except IOError:
+
+        if int(request.args.get("ajax",['0'])[0]) == 1:
             self.body = "<H1>#POS#</H1>oops..."
+        else:
+            try:
+                with open("camera.html") as myfile:
+                    self.body = "".join(line for line in myfile)
+                myfile.closed
+            except IOError:
+                self.body = "<H1>#POS#</H1>oops..."
 
         ####################################################
         #   Simple HTTP get API
@@ -132,9 +136,7 @@ class CameraController(resource.Resource):
                 newPosition = 180
 
             self.position = int(newPosition)
-
             self.percentage = 100 - (100 * float(self.position)/float(180))
-
             setServo(self.position)
 
         request.setHeader("content-type", "text/html")
