@@ -86,7 +86,7 @@ class CameraController(resource.Resource):
         ###################################################
 
         if int(request.args.get("ajax",['0'])[0]) == 1:
-            self.body = "<H1>#POS#</H1>oops..."
+            self.body = ""
         else:
             try:
                 with open("camera.html") as myfile:
