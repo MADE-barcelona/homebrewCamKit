@@ -1,11 +1,16 @@
+#!/usr/bin/python
 
-#!/usr/bin/env python
+from twisted.web import server, resource
+from twisted.internet import reactor
 
-# Load the XLoBorg library
+import time
 import XLoBorg
-
-# Load maths library
 import math
+
+try:
+	import simplejson as json
+except ImportError:
+	import json
 
 # Tell the library to disable diagnostic printouts
 XLoBorg.printFunction = XLoBorg.NoPrint
@@ -13,22 +18,35 @@ XLoBorg.printFunction = XLoBorg.NoPrint
 # Start the XLoBorg module (sets up devices)
 XLoBorg.Init()
 
-# Read and display the raw magnetometer readings
+class HelmetCam(resource.Resource):
+    isLeaf = True
+    print "starting"
 
-mx,my,mz = XLoBorg.ReadCompassRaw()
+    try:
 
-print 'mX = %+06d, mY = %+06d, mZ = %+06d' % XLoBorg.ReadCompassRaw()
+    	def render_GET(self, request):
+        	# Read and display the raw magnetometer readings
+        	mx,my,mz = XLoBorg.ReadCompassRaw()
 
-# get the heading in radians
-heading = math.atan2 (my,mx)
+        	# get the heading in radians
+       		heading = math.atan2 (my,mx)
 
-# Correct negative values
+        	# Correct negative values
 
-if (heading < 0):
-        heading  = heading + (2 * math.pi)
+        	if (heading < 0):
+            		heading  = heading + (2 * math.pi)
 
-# convert to degrees
+        	# convert to degrees
+        	heading = heading * 180/math.pi;
 
-heading = heading * 180/math.pi;
+	        request.setHeader("content-type", "application/json")
 
-print heading
+		return json.dumps({"h": heading}) + "\n"
+
+    except KeyboardInterrupt:
+        pass
+
+
+reactor.listenTCP(8081,server.Site(HelmetCam()))
+reactor.run()
+
