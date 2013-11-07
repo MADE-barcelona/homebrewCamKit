@@ -50,7 +50,7 @@ def setServo(angle):
 ##################################################
 #   Basic camera controller
 ##################################################
-class CameraController(resource.Resource):
+class CameraController():
 
     print "Camera Controller started."
 
