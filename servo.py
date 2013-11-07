@@ -70,19 +70,20 @@ class CameraController():
     set("active", "1")
     setServo(position)
 
-    def rotateCamera(self):
+    newPosition = int(urllib2.urlopen("http://geekfreak.com:8080/").read())
 
-        newPosition = int(urllib2.urlopen("http://geekfreak.com:8080/").read())
+    if newPosition < 0:
+        newPosition = 0
 
-        if newPosition < 0:
-             newPosition = 0
+    if newPosition > 180:
+         newPosition = 180
 
-        if newPosition > 180:
-            newPosition = 180
-
-        self.position = newPosition
-        self.percentage = 100 - (100 * float(self.position)/float(180))
+    position = newPosition
+    percentage = 100 - (100 * float(position)/float(180))
         
-        print self.position
-        setServo(self.position)
+    print position
+    setServo(position)
+
+
+
 
