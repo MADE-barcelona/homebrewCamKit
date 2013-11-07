@@ -30,11 +30,7 @@
 ####################################################################
 
 import time
-
-# twisted web server
-# sudo apt-get install python-twisted
-from twisted.web import server, resource
-from twisted.internet import reactor
+import urllib2
 
 ##################################################
 #   Utility functions to access the PWM mode on
@@ -66,8 +62,6 @@ class CameraController(resource.Resource):
     position = HOME
     percentage = 50
 
-    body = "<H1>#POS#</H1>" # Worst case scenario!
-
     print "initial position: ", position, type(position)
 
     set("delayed", "0")
@@ -76,71 +70,19 @@ class CameraController(resource.Resource):
     set("active", "1")
     setServo(position)
 
-    def render_GET(self, request):
+    def rotateCamera(self):
 
-        ###################################################
-        #   fetch page template.
-        #   camera.html is reloaded with every request
-        #   in an apparent homage to 1998! but allows very
-        #   rapid change/deploy for the web UI.
-        ###################################################
+        newPosition = int(urllib2.urlopen("http://geekfreak.com:8080/").read())
 
-        if int(request.args.get("ajax",['0'])[0]) == 1:
-            self.body = ""
-        else:
-            try:
-                with open("camera.html") as myfile:
-                    self.body = "".join(line for line in myfile)
-                myfile.closed
-            except IOError:
-                self.body = "<H1>#POS#</H1>oops..."
+        if newPosition < 0:
+             newPosition = 0
 
-        ####################################################
-        #   Simple HTTP get API
-        #
-        #   http://HOSTNAME:8080
-        #       reset to HOME position
-        #   http://HOSTNAME:8080/nnn
-        #       where nnn is a value between 0 and 180
-        #   http://HOSTNAME:8080/LEFT
-        #   http://HOSTNAME:8080/RIGHT
-        #       to tick the motor left or right
-        #
-        ####################################################
-        newPosition = int(self.position)
-        rawRequestedPosition = request.path
+        if newPosition > 180:
+            newPosition = 180
 
-        if rawRequestedPosition != "/favicon.ico":
+        self.position = newPosition
+        self.percentage = 100 - (100 * float(self.position)/float(180))
+        
+        print self.position
+        setServo(self.position)
 
-            print request.getClientIP(), request.uri ,
-
-            if request.uri  == "/": # send to HOME position
-                newPosition = self.HOME
-            elif rawRequestedPosition == "/LEFT":
-                newPosition = self.position + self.TICK
-            elif rawRequestedPosition == "/RIGHT":
-                newPosition = self.position - self.TICK
-            else:
-                try:
-                    newPosition = int(filter(type(rawRequestedPosition).isdigit, rawRequestedPosition))
-                except ValueError:
-                    newPosition = self.position
-                    print "***" ,
-
-            print type(self.position), self.position, type(newPosition) , newPosition
-
-            if newPosition < 0:
-                newPosition = 0
-
-            if newPosition > 180:
-                newPosition = 180
-
-            self.position = int(newPosition)
-            self.percentage = 100 - (100 * float(self.position)/float(180))
-            setServo(self.position)
-
-        request.setHeader("content-type", "text/html")
-        return self.body.replace("#POS#", str(self.position)).replace("#PCT#", str(self.percentage)).replace("#RPCT#",str(100- self.percentage))
-
-reactor.listenTCP(8080, server.Site(CameraController()))
-reactor.run()
